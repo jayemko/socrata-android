@@ -1,4 +1,4 @@
-The Socrata Java API
+Unofficial Socrata android Java API
 ====================
 
 Unoffcial android java api of socrata/socrata-api-java
