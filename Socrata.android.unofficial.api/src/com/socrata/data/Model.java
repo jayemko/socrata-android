@@ -1,0 +1,263 @@
+package com.socrata.data;
+
+import android.util.Log;
+
+import com.socrata.api.*;
+import com.sun.jersey.core.impl.provider.entity.Inflector;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+
+
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+
+public abstract class Model<T> implements Serializable
+{
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6905987697798039206L;
+
+	public abstract <T extends Model> T create(Connection request) throws RequestException;
+    public abstract <T extends Model> T update(Connection request) throws RequestException;
+    public abstract void delete(Connection request) throws RequestException;
+
+    static final String base = "https://opendata.socrata.com/api";
+    static final long ticketCheck = 10000L;
+    
+    static ObjectMapper mapper = new ObjectMapper();
+    Response response;
+    
+    <T> T deserialize(String serializedBody, boolean intoSelf, Class<T> type) throws RequestException
+    {
+        //ObjectMapper mapper = new ObjectMapper();
+
+        try
+        {
+            if (intoSelf)
+            {
+                mapper.updatingReader(this).readValue(serializedBody);
+                return (T) this;
+            }
+            else
+            {
+                return mapper.readValue(serializedBody, type);
+            }
+        }
+        catch (JsonMappingException e)
+        {
+            throw new RequestException("Invalid response does not appear to be a " + type.toString() + ".", e);
+        }
+        catch (JsonParseException e)
+        {
+            int toShow = Math.min(1000, serializedBody.length());
+            throw new RequestException("Invalid json in response. Unable to parse. First " + toShow + " charecters of response: " + serializedBody.substring(0, toShow), e);
+        }
+        catch (IOException e)
+        {
+            throw new RequestException("There was a problem parsing the response.", e);
+        }
+    }
+
+    <T> List<T> deserializeList(String serializedBody, final Class<T> type) throws RequestException
+    {
+        //ObjectMapper mapper = new ObjectMapper();
+
+        final Type listType = new ParameterizedType()
+        {
+            public Type[] getActualTypeArguments() {
+                return new Type[] { type };
+            }
+
+            public Type getRawType() {
+                return List.class;
+            }
+
+            public Type getOwnerType() {
+                return null;
+            }
+        };
+
+        try
+        {
+            // HACK: note that the TypeReference here doesn't actually care what type
+            // you give it; we override it in getType() immediately to deal with Javaness.
+            return mapper.readValue(serializedBody, new TypeReference<Object>()
+            {
+                @Override
+                public Type getType()
+                {
+                    return listType;
+                }
+            });
+        }
+        catch (JsonMappingException e)
+        {
+            throw new RequestException("Invalid response does not appear to be a " + type.toString() + ".", e);
+        }
+        catch (JsonParseException e)
+        {
+            throw new RequestException("Invalid json in response. Unable to parse. First 1000 charecters of response: " + serializedBody.substring(0, 1000), e);
+        }
+        catch (IOException e)
+        {
+            throw new RequestException("There was a problem parsing the response.", e);
+        }
+    }
+
+    <T extends Model> T result(Response response, boolean intoSelf, Class<T> type) throws RequestException
+    {
+        switch (response.status)
+        {
+            case 200:
+                return deserialize(response.body, intoSelf, type);
+            case 401:
+            case 403:
+                throw deserialize(response.body, false, UnauthorizedException.class);
+            case 404:
+                throw deserialize(response.body, false, NotFoundException.class);
+            default:
+                throw deserialize(response.body, false, RequestException.class);
+        }
+    }
+
+    <T extends Model> List<T> results (Response response, Class<T> type) throws RequestException
+    {
+        switch (response.status)
+        {
+            case 200:
+                return deserializeList(response.body, type);
+            case 401:
+            case 403:
+                throw deserialize(response.body, false, UnauthorizedException.class);
+            case 404:
+                throw deserialize(response.body, false, NotFoundException.class);
+            default:
+                throw deserialize(response.body, false, RequestException.class);
+        }
+    }
+
+    void verifyResponseCode(Response response) throws RequestException
+    {
+        switch (response.status)
+        {
+            case 200:
+            case 202:
+                break;
+            case 401:
+            case 403:
+                throw deserialize(response.body, false, UnauthorizedException.class);
+            case 404:
+                throw deserialize(response.body, false, NotFoundException.class);
+            default:
+                throw deserialize(response.body, false, RequestException.class);
+        }
+    }
+
+    String path()
+    {
+        return "/" + Inflector.getInstance().pluralize(this.getClass().getSimpleName().toLowerCase());
+    }
+
+    public <T extends Model> T get(String id, Connection request, Class<T> type) throws RequestException, IOException
+    {
+        Response response = request.get(base + path() + "/" + id);
+        if (response == null) throw new IOException();
+        //System.out.println(response.body.toString());
+        //System.out.println(response.status);
+        this.response=response;
+        return result(response, false, type);
+    }
+    public Response getResponse(){
+    	if(response!=null)
+    		return response;
+    	
+    	return new Response(404, null);
+    }
+
+ 
+	public <T extends Model> T getLocal(FileInputStream file, Class<T> type) throws RequestException
+    {
+    	Response response = new Response(404, null);
+        //File meta=new File("/home/kendall/Progetti/test1/src/"+id+".json");
+    	//FileInputStream metatest=new 
+        //URL path=null;
+        int i;
+        String prebody="";
+        //path=file.toURL();
+		try {
+			//InputStream is=path.openStream();
+			BufferedReader br=new BufferedReader(new InputStreamReader(file));
+			do
+			{
+			i=br.read();
+			
+			prebody=prebody + (char)i;
+			
+			//if(br.readLine()!=null)
+			//prebody=prebody + br.readLine()+"\n";
+			}while(i!=-1);
+			//prebody=prebody + "}";
+			file.close();
+			
+			 response = new Response(200, prebody);
+			 System.out.println(response.body.toString());
+			 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        //System.out.println(response.body.toString());
+        //System.out.println(response.status);
+        return result(response, false, type);
+    }
+
+    
+    public void delete(String id, Connection request) throws RequestException
+    {
+        verifyResponseCode(request.delete(base + path() + "/" + id));
+    }
+
+    public <T extends Model> T update(String id, Connection request, Class<T> type) throws RequestException
+    {
+        try
+        {
+            //ObjectMapper mapper = new ObjectMapper();
+            Response response = request.put(base + path() + "/" + id, mapper.writeValueAsString(this));
+
+            return result(response, false, type);
+        }
+        catch (IOException e)
+        {
+            throw new RequestException("Unexpected IOException while requesting.", e);
+        }
+    }
+
+    public <T extends Model> T create(Connection request, Class<T> type) throws RequestException
+    {
+        try
+        {
+            //ObjectMapper mapper = new ObjectMapper();
+            Response response = request.post(base + path(), mapper.writeValueAsString(this));
+
+            return result(response, false, type);
+        }
+        catch (IOException e)
+        {
+            throw new RequestException("Unexpected IOException while requesting.", e);
+        }
+    }
+}
