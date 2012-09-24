@@ -115,7 +115,7 @@ public class HttpConnection implements Connection{
 	        	//HttpURLConnection c=(HttpURLConnection) new URL(url).openConnection();
 	        	c.setRequestProperty("Content-Type", "application/json");
 	        	c.setRequestProperty("X-Socrata-Host", domain);
-	        	// il campo dG9tbXkuZXZvQGhvdG1haWwuY29tOmQ0YzNiMmEx è gia in Base64
+	        	
 	        	String credEndoced=Base64.encodeToString((user + ":" + password).getBytes(), Base64.DEFAULT);
 	        	c.setRequestProperty("Authorization", "Basic " + credEndoced);
 	        	c.setRequestProperty("X-App-Token", apptoken);
