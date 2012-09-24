@@ -1,7 +1,7 @@
 Unofficial Socrata android Java API
 ====================
 
-Unoffcial android java api of socrata/socrata-api-java
+Unofficial android java api of socrata/socrata-api-java
 Develop to work on android dispositive.
 features:
 	all View management methods
