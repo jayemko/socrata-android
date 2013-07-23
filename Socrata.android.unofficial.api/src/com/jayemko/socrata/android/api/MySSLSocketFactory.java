@@ -1,4 +1,4 @@
-package com.socrata.api;
+package com.jayemko.socrata.android.api;
 
 import java.io.IOException;
 import java.net.Socket;

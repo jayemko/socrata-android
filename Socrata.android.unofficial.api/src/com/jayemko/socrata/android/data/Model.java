@@ -1,8 +1,8 @@
-package com.socrata.data;
+package com.jayemko.socrata.android.data;
 
 import android.util.Log;
 
-import com.socrata.api.*;
+import com.jayemko.socrata.android.api.*;
 import com.sun.jersey.core.impl.provider.entity.Inflector;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;

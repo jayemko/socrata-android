@@ -1,4 +1,4 @@
-package com.socrata.api;
+package com.jayemko.socrata.android.api;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 

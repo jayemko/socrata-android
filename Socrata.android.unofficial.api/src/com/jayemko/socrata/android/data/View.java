@@ -1,12 +1,13 @@
-package com.socrata.data;
+package com.jayemko.socrata.android.data;
 
 
 
 import android.util.Log;
-import com.socrata.api.Connection;
-import com.socrata.api.RequestException;
-import com.socrata.api.Response;
-import com.socrata.util.Strings;
+
+import com.jayemko.socrata.android.api.Connection;
+import com.jayemko.socrata.android.api.RequestException;
+import com.jayemko.socrata.android.api.Response;
+import com.jayemko.socrata.android.util.Strings;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.codehaus.jackson.annotate.*;
 /*

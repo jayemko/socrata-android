@@ -1,4 +1,4 @@
-package com.socrata.util;
+package com.jayemko.socrata.android.util;
 
 import java.util.regex.Pattern;
 

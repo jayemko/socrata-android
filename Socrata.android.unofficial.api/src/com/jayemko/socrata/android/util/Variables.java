@@ -1,4 +1,4 @@
-package com.socrata.util;
+package com.jayemko.socrata.android.util;
 
 public class Variables {
 	// ---------------VARIABLES USED IN RETURN AFTER THREAD DOWNLOAD----

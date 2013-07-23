@@ -1,4 +1,4 @@
-package com.socrata.api;
+package com.jayemko.socrata.android.api;
 
 /**
  * Resources that return a 404 throw this exception.
